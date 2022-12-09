@@ -35,6 +35,7 @@ set(INTEGRATION_TEST_CONFIGS
   std_vector.toml
   std_vector_del_allocator.toml
   typedefed_parent.toml
+  union.toml
 )
 
 find_package(Thrift)

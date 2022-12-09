@@ -1,0 +1,36 @@
+includes = ["array", "cstdint"]
+definitions = '''
+  union Simple {
+    int a;
+    int b;
+    int c;
+  };
+
+  struct Sub {
+    std::uint32_t a;
+    std::uint32_t b;
+    std::array<char, 1> c;
+  };
+
+  union Container {
+    struct Sub a;
+  };
+
+'''
+
+[cases]
+  [cases.simple]
+    param_types = ["const Simple&"]
+    setup = "return {};"
+    expect_json = '''[{
+      "staticSize":4,
+      "dynamicSize":0
+      }]'''
+
+  [cases.container]
+    param_types = ["const Container&"]
+    setup = "return {};"
+    expect_json = '''[{
+      "staticSize":12,
+      "dynamicSize":0
+      }]'''
