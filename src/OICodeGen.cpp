@@ -2431,34 +2431,30 @@ std::optional<uint64_t> OICodeGen::getAlignmentRequirements(
       return *typeSize * CHAR_BIT;
     case DRGN_TYPE_STRUCT:
     case DRGN_TYPE_CLASS:
-    case DRGN_TYPE_UNION:
-      if (isContainer(e)) {
-        alignmentRequirement = 64;
-      } else {
-        auto numMembers = drgn_type_num_members(e);
-        auto *members = drgn_type_members(e);
-        for (size_t i = 0; i < numMembers; i++) {
-          struct drgn_qualified_type memberType {};
-          if (drgn_member_type(&members[i], &memberType, nullptr) != nullptr) {
-            continue;
-          }
-          size_t currentMemberAlignmentRequirement =
-              getAlignmentRequirements(memberType.type)
-                  .value_or(minimumAlignmentBits);
-          alignmentRequirement =
-              std::max(alignmentRequirement, currentMemberAlignmentRequirement);
+    case DRGN_TYPE_UNION: {
+      auto numMembers = drgn_type_num_members(e);
+      auto *members = drgn_type_members(e);
+      for (size_t i = 0; i < numMembers; i++) {
+        struct drgn_qualified_type memberType {};
+        if (drgn_member_type(&members[i], &memberType, nullptr) != nullptr) {
+          continue;
         }
-        for (size_t parentIndex = 0; parentIndex < parentClasses[e].size();
-             parentIndex++) {
-          size_t parentAlignment =
-              getAlignmentRequirements(parentClasses[e][parentIndex].type)
-                  .value_or(minimumAlignmentBits);
-          alignmentRequirement =
-              std::max(alignmentRequirement, parentAlignment);
-        }
+        size_t currentMemberAlignmentRequirement =
+            getAlignmentRequirements(memberType.type)
+                .value_or(minimumAlignmentBits);
+        alignmentRequirement =
+            std::max(alignmentRequirement, currentMemberAlignmentRequirement);
+      }
+      for (size_t parentIndex = 0; parentIndex < parentClasses[e].size();
+           parentIndex++) {
+        size_t parentAlignment =
+            getAlignmentRequirements(parentClasses[e][parentIndex].type)
+                .value_or(minimumAlignmentBits);
+        alignmentRequirement = std::max(alignmentRequirement, parentAlignment);
       }
 
       return alignmentRequirement;
+    }
     case DRGN_TYPE_POINTER:
       return 64;
     case DRGN_TYPE_TYPEDEF:
