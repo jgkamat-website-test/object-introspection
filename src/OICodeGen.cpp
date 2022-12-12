@@ -18,6 +18,7 @@
 #include <folly/SharedMutex.h>
 #include <glog/logging.h>
 
+#include <algorithm>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/replace.hpp>
@@ -3014,17 +3015,14 @@ bool OICodeGen::generateJitCode(std::string &code) {
       }
     }
 
-    auto alignment = getAlignmentRequirements(e).value_or(CHAR_BIT) / CHAR_BIT;
-    if (!isKnownType(name)) {
+    // These will be dummy blocks - not real types - so just assume the dummy
+    // block is one type, maxing out at 64 bit alignment, instead of using our
+    // 'real' alignment calculation
+    uint64_t alignment = std::min((uint64_t)8, sz);
+    if (!isKnownType(name) || isTypeToStub(name)) {
       definitionsCode.append("struct alignas(" + std::to_string(alignment) +
                              ") " + (*typeName) + " { char dummy[" +
                              std::to_string(sz) + "];};\n");
-    } else {
-      if (isTypeToStub(name)) {
-        definitionsCode.append("struct alignas(" + std::to_string(alignment) +
-                               ") " + (*typeName) + " { char dummy[" +
-                               std::to_string(sz) + "];};\n");
-      }
     }
   }
 
